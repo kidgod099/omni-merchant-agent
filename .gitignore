@@ -1,0 +1,4 @@
+# local credentials — do NOT commit
+.env
+credentials.json
+token.pickle
