@@ -1,10 +1,42 @@
 {
-    "manifest_version": 3,
-    "name": "Omni-Merchant Agent",
-    "version": "0.1",
-    "permissions": ["identity","scripting","storage","activeTab"],
-    "host_permissions": ["https://mail.google.com/*"],
-    "background": { "service_worker": "background.js" },
-    "side_panel": { "default_path": "sidebar.html" }
+  "key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDA5GfL7s5iw1Hn\nGU77q2Y+Z2qj/NDwblV22y42qTUk2FMUOCvBs497Dl/gx2c9K15pmI2c4DGOnKqe\nOruYbkBsWB4VQ2Hm2EmoA9kNfKjtSmYinMwZhdDBJm6RulKiS9C40asjxnq1bgXk\n864C2Zo0PBzRkjLKX/ujJ2Ar4Fga8vJZa/8lvbP5a17/sHuzwd6qgPrmh8dbtew8\nIkAn6XWJXxKLLhEpTA/qBnJ9FspTI7B+uTXckO1TTnYEOyImKJ/8oigMlH7LwGMK\nmWrexE7kA1XfopxUUwBpK6UWyXWZhIwOxgOhjJ6gln+EkJWAHGjDJ3urMYsd0T7s\nf98bIgRpAgMBAAECggEABtZRw43EbQXFWm6wOQV7S0z5H7TvZwZSKzNbsP5Qbuzo\nDPhsvKHzvQXmah5HT4jBAPcyVdQwjYCKH6+vRJjr2atJ7bEEwFz8R2NTh0Ha7wZL\nFoD+Tw1KN/53vtye3zfWvyZXbZ40bUfoF5R3n4w9Bgr3bopDGJ9MWR0lMIj0NohE\nOrJz85QWTeL+SJJ8Lg965zpmUqCyDBkVwSkqUOUFTSpNKCyUgVlN7UIrQcmAMTQF\nmz1F/iLlOEZj5RHxUKFGle9HzcARIoXOJd1C3oIhKJm/WqSQBQINDmTGnKw79PDB\nNTQjSs7J7CSCOxMecSf73yh0KqiWCEIy5KR0g5AsgQKBgQDtztPIcB/EulHVyDvg\nWK4Xdxn+OJWI/n5Sb+E1A/C8Foy+0mrgSNF2ELUYnBZaojIf1NGEYD0XcO/8oEVL\n+90Eqch2BJ6gEzzURnkDvrGA59NQUSHqqRdO+dWCKPpxDq/JMVMAoMRen8gDEZxe\nSAqMzrzMXsSE1BQC9UBc01i2WQKBgQDPpfW0Ofc2HAXKgRidf+wb+oEni4+l+iF3\nYz126WrDIDavk/veyLI5B3tkPiY866hpZyK8dfK1Pt8r+ktPp8AtUYrt+k9Bukii\nv8iZ2ABTzOvPvCK6iEqQNwqlsI2ZL52IkpVzTiKlSWHlTB/Mg0qAB8bHMzeAFCfI\nfcRJFVkckQKBgD5TLn4hpLHSgxAcYlTx6O6NcGqIOeilikXgvI1Acx9YaZq5Wvld\nHEhtKIlCnzkxuSFOjXq8Hka+eqci+gZoBAzs0nTb0Rby88ZOkfjBSZQXLfKm0NTH\nbCxund53DuwChV+dZbuMZurFxY3IV8r95oXwyNpnG+oUCwqbbDrnySBBAoGAK3YM\nAEXlpTCmUaVFlqmQrKZ44+MFFPNOj+N4mOvwCZkzePpbTFzrWJ5lSCzt6fBVFoKc\ntZ9mRmM7aMQBgVGWGqYnkvnCHvqze0Ty4qhgISoR7S/ugOZH3Pl4RAe5C2f46/3q\nQ/EFtVyvncOaID8Wl8eI5mak5izRytfv/m/2b9ECgYAp494qeLmGOpnKyUrB7m6Y\nH8zLDjuA5JKDYMNsV47V4GAigqzmbXRcC8KUpuRtz6vh/a3Pom84EtrAu2HPX2i+\nHIlhIPnhR6iE9w/thwfMTz9p5GlLzvjQQMKzjn8j7pZ1D4I53igZHv5E2Dsw3cva\npE8q3CEgenFoJQLNOnAm+Q==\n-----END PRIVATE KEY-----",
+  "manifest_version": 3,
+  "name": "Omni-Merchant Agent",
+  "version": "0.1",
+  "description": "Chat-driven agent for Magicpin, Zomato, Swiggy",
+
+  "action": {
+    "default_title": "Omni-Merchant Agent",
+    "default_popup": "sidebar.html"
+  },
+  "side_panel": {
+    "default_path": "sidebar.html"
+  },
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "permissions": [
+    "identity",
+    "identity.email",
+    "storage",
+    "alarms",
+    "notifications"
+  ],
+
+  "host_permissions": [
+    "https://mail.google.com/*",
+    "https://merchant.magicpin.in/*",
+    "https://merchant.zomato.com/*",
+    "https://partner.swiggy.com/*",
+    "https://*.run.app/*"
+  ],
+
+  "oauth2": {
+    "client_id": "298685355252-hie25398gmmf7010t2s8i1lp66okfvbd.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/gmail.readonly"
+    ]
   }
-  
+}

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Omni-Merchant Agent</title>
+  <style>
+    body { font-family: sans-serif; margin:8px; width:320px; }
+    #messages { border:1px solid #ccc; height:120px; overflow-y:auto; padding:4px; margin-bottom:8px; }
+    form { display:flex; gap:4px; margin-bottom:12px; }
+    input { flex:1; padding:4px; }
+    button { padding:4px 8px; }
+    hr { margin:12px 0; }
+    #accountSection { margin-bottom:12px; }
+    #latestAlert { background:#f9f9f9; border:1px solid #ddd; padding:8px; min-height:40px; }
+
+    .msg.user {
+      text-align: right;
+      background: #daf1ff;
+      margin: 4px;
+      padding: 6px 10px;
+      border-radius: 8px;
+    }
+
+    .msg.bot {
+      text-align: left;
+      background: #f1f1f1;
+      margin: 4px;
+      padding: 6px 10px;
+      border-radius: 8px;
+    }
+
+    .msg.bot ul {
+      margin: 4px 0;
+      padding-left: 20px;
+    }
+
+    .msg.bot p {
+      margin: 4px 0;
+}
+
+  </style>
+</head>
+<body>
+  <h3>Omni-Merchant Agent</h3>
+  <div id="messages"></div>
+
+  <form id="chatForm">
+    <input id="userInput" type="text" placeholder="Ask me…" required />
+    <button type="submit">Send</button>
+  </form>
+
+  <hr/>
+
+  <h4>⚙️ Gmail Account</h4>
+  <div id="accountSection">
+    <span id="currentAccount">Not signed in</span>
+    <button id="switchBtn">Switch Account</button>
+  </div>
+
+  <h4>⚡ Latest Magicpin Alert</h4>
+  <div id="latestAlert">Loading…</div>
+
+  <script src="sidebar.js"></script>
+</body>
+</html>
