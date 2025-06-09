@@ -5,7 +5,16 @@
   <title>Omni-Merchant Agent</title>
   <style>
     body { font-family: sans-serif; margin:8px; width:320px; }
-    #messages { border:1px solid #ccc; height:120px; overflow-y:auto; padding:4px; margin-bottom:8px; }
+    #messages {
+      border:1px solid #ccc;
+      height:120px;
+      overflow-y:auto;
+      padding:4px;
+      margin-bottom:8px;
+      font-size:15px;
+      line-height:1.4;
+      color:#222;
+    }
     form { display:flex; gap:4px; margin-bottom:12px; }
     input { flex:1; padding:4px; }
     button { padding:4px 8px; }
@@ -37,6 +46,12 @@
     .msg.bot p {
       margin: 4px 0;
 }
+
+    /* Improve spacing and preserve line breaks for chat messages */
+    #messages div {
+      margin: 2px 0;
+      white-space: pre-wrap;
+    }
 
   </style>
 </head>
