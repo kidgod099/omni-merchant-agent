@@ -39,15 +39,31 @@ function getToken(interactive = false) {
   });
 }
 
+// Get the current account email for Classroom URL
+function getCurrentAccount() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get('currentAccount', ({ currentAccount }) => {
+      resolve(currentAccount);
+    });
+  });
+}
+
 // Google Classroom API functions
 async function fetchClassroomCourses(token) {
   const response = await fetch('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE', {
     headers: { Authorization: `Bearer ${token}` }
   });
-  if (!response.ok) throw new Error(`Failed to fetch courses: ${response.statusText}`);
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(
+      `Failed to fetch courses: ${response.status} ${response.statusText}.` +
+      `\nResponse body: ${body}`
+    );
+  }
   const data = await response.json();
   return data.courses || [];
 }
+
 
 async function fetchCourseAssignments(token, courseId) {
   const response = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`, {
@@ -60,16 +76,32 @@ async function fetchCourseAssignments(token, courseId) {
 
 async function getClassroomAssignments() {
   try {
+    // Always pull the freshest token
     const token = await getToken(false);
-    
-    // Fetch all active courses
+    if (!token) {
+      throw new Error('No authentication token found. Please switch accounts or re-authenticate.');
+    }
+
+    // 🔍 DEBUG: fetch and log the email this token belongs to
+    try {
+      const ui = await fetch(
+        'https://www.googleapis.com/oauth2/v2/userinfo?alt=json',
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const user = await ui.json();
+      console.log('📚 Classroom assignments request for:', user.email);
+    } catch (_) {
+      console.warn('Could not fetch userinfo for Classroom debug.');
+    }
+
+    // Now fetch courses
     const courses = await fetchClassroomCourses(token);
     
     // Fetch assignments for each course
     const allAssignments = [];
     for (const course of courses) {
       try {
-        const assignments = await fetchCourseAssignments(token, course.id);
+        const assignments = await fetchCourseAssignments(Token, course.id);
         assignments.forEach(assignment => {
           allAssignments.push({
             courseName: course.name,
@@ -91,15 +123,6 @@ async function getClassroomAssignments() {
     return allAssignments;
   } catch (err) {
     throw new Error(`Failed to fetch classroom data: ${err.message}`);
-  }
-}
-
-async function openGoogleClassroom() {
-  try {
-    await chrome.tabs.create({ url: 'https://classroom.google.com/' });
-    return true;
-  } catch (err) {
-    throw new Error(`Failed to open Google Classroom: ${err.message}`);
   }
 }
 
@@ -131,10 +154,12 @@ async function refreshLatestSnippet() {
 
     // save and notify sidebar
     const prev = (await chrome.storage.local.get('magicpinSubjects')).magicpinSubjects || [];
-    if (JSON.stringify(subjects) !== JSON.stringify(prev)) {
-      await chrome.storage.local.set({ magicpinSubjects: subjects });
-      chrome.runtime.sendMessage({ type: 'newSubjects', subjects });
-    }
+    
+    await chrome.storage.local.set({ magicpinSubjects: subjects });
+    chrome.runtime.sendMessage({ type:'newSubjects', subjects }, () => {
+      if (chrome.runtime.lastError) console.error(lastError.message);
+    });
+      
   } catch (err) {
     console.warn('Snippet refresh skipped:', err);
   }
@@ -164,12 +189,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'getClassroomAssignments') {
     getClassroomAssignments()
       .then(assignments => sendResponse({ assignments }))
-      .catch(err => sendResponse({ error: err.message }));
-    return true;
-  }
-  if (msg.type === 'openGoogleClassroom') {
-    openGoogleClassroom()
-      .then(success => sendResponse({ success }))
       .catch(err => sendResponse({ error: err.message }));
     return true;
   }

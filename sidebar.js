@@ -1,5 +1,8 @@
 // sidebar.js
 
+console.log('🔵 sidebar.js loaded');
+
+
 document.addEventListener('DOMContentLoaded', () => {
   const msgs            = document.getElementById('messages');
   const form            = document.getElementById('chatForm');
@@ -63,19 +66,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function handleAssignmentCommand() {
-    append('You: Checking your assignments...');
+    const accountText = currentAccount ? ` for ${currentAccount}` : '';
+    append(`You: Checking your assignments${accountText}...`);
     addToHistory('You', 'check my assignments');
     
     try {
-      // First open Google Classroom
-      chrome.runtime.sendMessage({ type: 'openGoogleClassroom' }, resp => {
-        if (resp.error) {
-          append('Bot Error: ' + resp.error);
-          addToHistory('Bot', 'Error opening Google Classroom: ' + resp.error);
-        }
-      });
-
-      // Then fetch assignments
+      // Only fetch assignments, do not open Google Classroom
       chrome.runtime.sendMessage({ type: 'getClassroomAssignments' }, resp => {
         if (resp.error) {
           append('Bot Error: ' + resp.error);
@@ -134,12 +130,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // initialize UI: load account, subjects, and history
+  // initialize UI: load account, subjects, and history
   chrome.storage.local.get(['currentAccount','magicpinSubjects'],
     ({ currentAccount: acct, magicpinSubjects }) => {
       currentAccount = acct;
       if (acct) currentAcctSpan.textContent = acct;
+
+      // render stored emails immediately
       renderSubjects(magicpinSubjects || []);
       loadHistoryForAccount(acct);
+
+      // ▶︎ Trigger a fresh fetch of emails and LLM summary on every sidebar open
+      chrome.runtime.sendMessage({ type: 'refreshSnippet' });
     }
   );
 
@@ -172,8 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // switch account flow (unchanged)
   switchBtn.addEventListener('click', () => {
+
     const scopes   = chrome.runtime.getManifest().oauth2.scopes.join(' ');
     const redirect = chrome.identity.getRedirectURL();
     const authUrl  =
@@ -184,28 +186,53 @@ document.addEventListener('DOMContentLoaded', () => {
       `&scope=${encodeURIComponent(scopes)}` +
       `&prompt=select_account`;
 
-    chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true }, redirectUrl => {
+    console.log('🔄 switchBtn clicked—entering flow');
+
+
+    chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true }, async redirectUrl => {
       if (chrome.runtime.lastError || !redirectUrl) return;
       const token = new URLSearchParams(new URL(redirectUrl).hash.substring(1)).get('access_token');
       if (!token) return;
-      chrome.storage.local.set({ gmailToken: token });
-      chrome.identity.getProfileUserInfo(info => {
+
+      console.log('🔑 got token:', token);
+
+      // 1️⃣ Store the token
+      await chrome.storage.local.set({ gmailToken: token });
+
+      // 2️⃣ Fetch the real email behind that token
+      try {
+        const resp = await fetch(
+          'https://www.googleapis.com/oauth2/v2/userinfo?alt=json',
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const info = await resp.json();
         const email = info.email || 'unknown';
-        // delete old user's history and clear UI
+        console.log('✉️ got email from userinfo:', email);
+
+
+        // 3️⃣ Clear old data
         if (currentAccount) {
           chrome.storage.local.remove('chatHistory_' + currentAccount);
           chatHistory = [];
           msgs.innerHTML = '';
+          alertDiv.textContent = 'Loading…';  // clear old subjects
         }
-        // set and load new user
+
+        // 4️⃣ Update UI & storage
         currentAccount = email;
         currentAcctSpan.textContent = email;
-        chrome.storage.local.set({ currentAccount: email });
+        await chrome.storage.local.set({ currentAccount: email });
+
+        // 5️⃣ Finally, trigger a fresh snippet & assignment check
+        chrome.runtime.sendMessage({ type: 'refreshSnippet' });
         loadHistoryForAccount(email);
-      });
-      chrome.runtime.sendMessage({ type: 'refreshSnippet' });
+      } catch (e) {
+        console.error('Failed to fetch userinfo:', e);
+      }
     });
   });
+
 
   // chat handler
   form.addEventListener('submit', e => {
@@ -233,4 +260,5 @@ document.addEventListener('DOMContentLoaded', () => {
       append('Bot: ' + resp.text);
     });
   });
+
 });
