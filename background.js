@@ -39,6 +39,70 @@ function getToken(interactive = false) {
   });
 }
 
+// Google Classroom API functions
+async function fetchClassroomCourses(token) {
+  const response = await fetch('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error(`Failed to fetch courses: ${response.statusText}`);
+  const data = await response.json();
+  return data.courses || [];
+}
+
+async function fetchCourseAssignments(token, courseId) {
+  const response = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error(`Failed to fetch assignments: ${response.statusText}`);
+  const data = await response.json();
+  return data.courseWork || [];
+}
+
+async function getClassroomAssignments() {
+  try {
+    const token = await getToken(false);
+    
+    // Fetch all active courses
+    const courses = await fetchClassroomCourses(token);
+    
+    // Fetch assignments for each course
+    const allAssignments = [];
+    for (const course of courses) {
+      try {
+        const assignments = await fetchCourseAssignments(token, course.id);
+        assignments.forEach(assignment => {
+          allAssignments.push({
+            courseName: course.name,
+            courseId: course.id,
+            title: assignment.title,
+            description: assignment.description || 'No description',
+            dueDate: assignment.dueDate,
+            dueTime: assignment.dueTime,
+            maxPoints: assignment.maxPoints,
+            state: assignment.state,
+            id: assignment.id
+          });
+        });
+      } catch (err) {
+        console.warn(`Failed to fetch assignments for course ${course.name}:`, err);
+      }
+    }
+    
+    return allAssignments;
+  } catch (err) {
+    throw new Error(`Failed to fetch classroom data: ${err.message}`);
+  }
+}
+
+async function openGoogleClassroom() {
+  try {
+    await chrome.tabs.create({ url: 'https://classroom.google.com/' });
+    return true;
+  } catch (err) {
+    throw new Error(`Failed to open Google Classroom: ${err.message}`);
+  }
+}
+
 async function refreshLatestSnippet() {
   try {
     const token = await getToken(false);
@@ -96,5 +160,17 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
   if (msg.type === 'refreshSnippet') {
     refreshLatestSnippet();
+  }
+  if (msg.type === 'getClassroomAssignments') {
+    getClassroomAssignments()
+      .then(assignments => sendResponse({ assignments }))
+      .catch(err => sendResponse({ error: err.message }));
+    return true;
+  }
+  if (msg.type === 'openGoogleClassroom') {
+    openGoogleClassroom()
+      .then(success => sendResponse({ success }))
+      .catch(err => sendResponse({ error: err.message }));
+    return true;
   }
 });

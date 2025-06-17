@@ -3,7 +3,7 @@
   "manifest_version": 3,
   "name": "Omni-Merchant Agent",
   "version": "0.1",
-  "description": "Chat-driven agent for Magicpin, Zomato, Swiggy",
+  "description": "Chat-driven agent for Magicpin, Zomato, Swiggy, and Google Classroom",
 
   "action": {
     "default_title": "Omni-Merchant Agent",
@@ -22,7 +22,8 @@
     "identity.email",
     "storage",
     "alarms",
-    "notifications"
+    "notifications",
+    "tabs"
   ],
 
   "host_permissions": [
@@ -30,13 +31,17 @@
     "https://merchant.magicpin.in/*",
     "https://merchant.zomato.com/*",
     "https://partner.swiggy.com/*",
-    "https://*.run.app/*"
+    "https://*.run.app/*",
+    "https://classroom.googleapis.com/*"
   ],
 
   "oauth2": {
     "client_id": "298685355252-hie25398gmmf7010t2s8i1lp66okfvbd.apps.googleusercontent.com",
     "scopes": [
-      "https://www.googleapis.com/auth/gmail.readonly"
+      "https://www.googleapis.com/auth/gmail.readonly",
+      "https://www.googleapis.com/auth/classroom.courses.readonly",
+      "https://www.googleapis.com/auth/classroom.coursework.me.readonly",
+      "https://www.googleapis.com/auth/classroom.rosters.readonly"
     ]
   }
 }

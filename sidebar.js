@@ -16,6 +16,82 @@ document.addEventListener('DOMContentLoaded', () => {
   // your web-app client ID
   const WEB_CLIENT_ID = '298685355252-moh8cfupug726uu71ddrb1h7bccojahd.apps.googleusercontent.com';
 
+  // Assignment-related keywords
+  const ASSIGNMENT_KEYWORDS = [
+    'assignment', 'assignments', 'hw', 'homework', 'check my', 'my assignments',
+    'classroom', 'due', 'coursework', 'projects', 'tasks'
+  ];
+
+  function isAssignmentCommand(text) {
+    const lowerText = text.toLowerCase();
+    return ASSIGNMENT_KEYWORDS.some(keyword => lowerText.includes(keyword));
+  }
+
+  function formatAssignmentSummary(assignments) {
+    if (!assignments || assignments.length === 0) {
+      return "No assignments found in your Google Classroom courses.";
+    }
+
+    let summary = `📚 **Assignment Summary** (${assignments.length} total)\n\n`;
+    
+    // Group by course
+    const courseGroups = {};
+    assignments.forEach(assignment => {
+      if (!courseGroups[assignment.courseName]) {
+        courseGroups[assignment.courseName] = [];
+      }
+      courseGroups[assignment.courseName].push(assignment);
+    });
+
+    Object.keys(courseGroups).forEach(courseName => {
+      const courseAssignments = courseGroups[courseName];
+      summary += `**${courseName}** (${courseAssignments.length} assignments):\n`;
+      
+      courseAssignments.forEach(assignment => {
+        const dueInfo = assignment.dueDate ? 
+          `Due: ${assignment.dueDate.year}-${assignment.dueDate.month}-${assignment.dueDate.day}` : 
+          'No due date';
+        const points = assignment.maxPoints ? ` (${assignment.maxPoints} pts)` : '';
+        const status = assignment.state === 'PUBLISHED' ? '📝' : '⏳';
+        
+        summary += `${status} ${assignment.title}${points} - ${dueInfo}\n`;
+      });
+      summary += '\n';
+    });
+
+    return summary;
+  }
+
+  async function handleAssignmentCommand() {
+    append('You: Checking your assignments...');
+    addToHistory('You', 'check my assignments');
+    
+    try {
+      // First open Google Classroom
+      chrome.runtime.sendMessage({ type: 'openGoogleClassroom' }, resp => {
+        if (resp.error) {
+          append('Bot Error: ' + resp.error);
+          addToHistory('Bot', 'Error opening Google Classroom: ' + resp.error);
+        }
+      });
+
+      // Then fetch assignments
+      chrome.runtime.sendMessage({ type: 'getClassroomAssignments' }, resp => {
+        if (resp.error) {
+          append('Bot Error: ' + resp.error);
+          addToHistory('Bot', 'Error fetching assignments: ' + resp.error);
+        } else {
+          const summary = formatAssignmentSummary(resp.assignments);
+          append('Bot: ' + summary);
+          addToHistory('Bot', summary);
+        }
+      });
+    } catch (err) {
+      append('Bot Error: ' + err.message);
+      addToHistory('Bot', 'Error: ' + err.message);
+    }
+  }
+
   function append(text) {
     const d = document.createElement('div');
     d.textContent = text;
@@ -135,6 +211,14 @@ document.addEventListener('DOMContentLoaded', () => {
   form.addEventListener('submit', e => {
     e.preventDefault();
     const txt = input.value.trim(); if (!txt) return;
+    
+    // Check if this is an assignment-related command
+    if (isAssignmentCommand(txt)) {
+      input.value = '';
+      handleAssignmentCommand();
+      return;
+    }
+    
     addToHistory('You', txt);
     append('You: ' + txt);
     input.value = '';
